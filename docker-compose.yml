@@ -1,0 +1,48 @@
+services:
+  # Database: PostgreSQL
+  db:
+    image: postgres:16-alpine
+    container_name: studiosync-db
+    restart: always
+    environment:
+      POSTGRES_USER: user_admin
+      POSTGRES_PASSWORD: password_segreta
+      POSTGRES_DB: studiosync_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  # Backend: PHP + Nginx (API Server)
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: studiosync-api
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend:/var/www/html
+      - ./uploads:/var/www/html/uploads
+    depends_on:
+      - db
+
+  # Frontend: Next.js / React
+  frontend:
+    build:
+      context: ./frontend
+    container_name: studiosync-ui
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+
+volumes:
+  db_data:
