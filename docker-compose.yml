@@ -5,9 +5,9 @@ services:
     container_name: studiosync-db
     restart: always
     environment:
-      POSTGRES_USER: user_admin
-      POSTGRES_PASSWORD: password_segreta
-      POSTGRES_DB: studiosync_db
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
     ports:
       - "5432:5432"
     volumes:
@@ -18,6 +18,11 @@ services:
     build: 
       context: ./backend
       dockerfile: Dockerfile
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}=value
     container_name: studiosync-api
     ports:
       - "8080:80"
