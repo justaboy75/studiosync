@@ -22,7 +22,8 @@ services:
       DB_HOST: ${DB_HOST}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
-      DB_PASS: ${DB_PASS}=value
+      DB_PASS: ${DB_PASS}
+      DB_PORT: ${DB_PORT}
     container_name: studiosync-api
     ports:
       - "8080:80"
