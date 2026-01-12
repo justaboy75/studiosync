@@ -1,10 +1,13 @@
 <?php
 
 /**
- * Database connection handler using environment variables.
  * This file centralizes the PDO instance for the entire application.
  */
 
+
+/**
+ * Database connection handler using environment variables.
+ */
 function getDatabaseConnection() {
     $host = getenv('DB_HOST');
     $db   = getenv('DB_NAME');
@@ -30,4 +33,31 @@ function getDatabaseConnection() {
         ]);
         exit;
     }
+}
+
+/**
+ * Executes a SELECT query and returns all results.
+ */
+function fetchAll($sql, $params = []) {
+    $pdo = getDatabaseConnection();
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+/**
+ * Executes an INSERT, UPDATE, or DELETE query.
+ * Returns the number of affected rows or the last inserted ID.
+ */
+function executeQuery($sql, $params = []) {
+    $pdo = getDatabaseConnection();
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    
+    // If it's an INSERT, we might want the new ID
+    if (stripos($sql, 'INSERT') === 0) {
+        return $pdo->lastInsertId();
+    }
+    
+    return $stmt->rowCount();
 }
