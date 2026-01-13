@@ -10,5 +10,5 @@ A professional document management portal designed for accounting firms and thei
 
 ## Getting Started
 1. Clone the repository.
-2. Run `docker-compose up --build -d`.
+2. Run `docker compose up --build -d`.
 3. Access the API at `http://localhost:8080` and the UI at `http://localhost:3000`.
