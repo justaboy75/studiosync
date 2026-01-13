@@ -1,65 +1,189 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from 'react';
+
+interface Client {
+  id?: number;
+  company_name: string;
+  vat_number: string;
+  email: string;
+}
+
+export default function Dashboard() {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // States for Modals
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  
+  // Selection/Form states
+  const [clientToDelete, setClientToDelete] = useState<number | null>(null);
+  const [newClient, setNewClient] = useState<Client>({ company_name: '', vat_number: '', email: '' });
+
+  const fetchClients = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/clients.php');
+      const result = await response.json();
+      if (result.status === 'success') setClients(result.data);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('http://localhost:8080/clients.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newClient),
+      });
+      const result = await response.json();
+      if (result.status === 'success') {
+        setIsAddModalOpen(false);
+        setNewClient({ company_name: '', vat_number: '', email: '' });
+        fetchClients();
+      }
+    } catch (error) {
+      console.error('Error adding client:', error);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (clientToDelete === null) return;
+    try {
+      const response = await fetch(`http://localhost:8080/clients.php?id=${clientToDelete}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+      if (result.status === 'success') {
+        setIsDeleteModalOpen(false);
+        fetchClients();
+      }
+    } catch (error) {
+      console.error('Error deleting client:', error);
+    }
+  };
+
+  useEffect(() => { fetchClients(); }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="min-h-screen bg-slate-50 p-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-extrabold text-slate-900">StudioSync</h1>
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-semibold shadow hover:bg-indigo-700 transition"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            + New Client
+          </button>
         </div>
-      </main>
-    </div>
+
+        {/* Clients Table */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="p-4 text-sm font-semibold text-slate-700">Company</th>
+                <th className="p-4 text-sm font-semibold text-slate-700">VAT Number</th>
+                <th className="p-4 text-sm font-semibold text-slate-700">Email</th>
+                <th className="p-4 text-sm font-semibold text-slate-700 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {clients.map((client) => (
+                <tr key={client.id} className="hover:bg-slate-50/50 transition">
+                  <td className="p-4 text-slate-900 font-medium">{client.company_name}</td>
+                  <td className="p-4 text-slate-500 text-sm">{client.vat_number}</td>
+                  <td className="p-4 text-slate-500 text-sm">{client.email}</td>
+                  <td className="p-4 text-right">
+                    <button 
+                      onClick={() => { setClientToDelete(client.id!); setIsDeleteModalOpen(true); }}
+                      className="text-rose-600 hover:text-rose-700 text-sm font-semibold"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ADD CLIENT MODAL */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
+            <h3 className="text-xl font-bold text-slate-900 mb-6">Register New Client</h3>
+            <form onSubmit={handleAddClient} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Company Name</label>
+                <input 
+                  required
+                  type="text" 
+                  className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  value={newClient.company_name}
+                  onChange={(e) => setNewClient({...newClient, company_name: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">VAT Number</label>
+                <input 
+                  required
+                  type="text" 
+                  className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  value={newClient.vat_number}
+                  onChange={(e) => setNewClient({...newClient, vat_number: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+                <input 
+                  required
+                  type="email" 
+                  className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  value={newClient.email}
+                  onChange={(e) => setNewClient({...newClient, email: e.target.value})}
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="flex-1 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-lg font-semibold hover:bg-slate-200"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700"
+                >
+                  Save Client
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION MODAL (Precedente) */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Confirm Deletion</h3>
+            <p className="text-slate-500 text-sm mb-6">Are you sure? This data will be permanently removed.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 px-4 py-2 bg-slate-100 rounded-lg font-semibold">Cancel</button>
+              <button onClick={confirmDelete} className="flex-1 px-4 py-2 bg-rose-600 text-white rounded-lg font-semibold">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
   );
 }
