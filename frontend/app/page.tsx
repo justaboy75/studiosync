@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { ENDPOINTS } from '../config/api';
 import NotificationModal from '../components/NotificationModal';
+import ClientModal from '../components/ClientModal';
 
 interface Client {
   id?: number;
@@ -16,7 +17,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   
   // States for Modals
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
     type: 'confirm' as 'confirm' | 'alert' | 'success',
@@ -25,29 +27,30 @@ export default function Dashboard() {
     onConfirm: () => {}
   });
   
-  // Selection/Form states
-  const [newClient, setNewClient] = useState<Client>({ company_name: '', vat_number: '', email: '' });
-
   
   // Handlers
-  const handleAddClient = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveClient = async (clientData: Client) => {
     try {
       const response = await fetch(ENDPOINTS.CLIENTS, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newClient),
+        body: JSON.stringify(clientData),
       });
       
       const result = await response.json();
-
+      
       if (result.status === 'success') {
-        setIsAddModalOpen(false);
-        setNewClient({ company_name: '', vat_number: '', email: '' });
+        setIsClientModalOpen(false);
         fetchClients();
       }
     } catch (error) {
-      console.error('Error adding client:', error);
+      setModalConfig({
+        isOpen: true,
+        type: 'alert',
+        title: 'Error',
+        message: 'Something went wrong while saving.',
+        onConfirm: () => {}
+      });
     }
   };
 
@@ -106,8 +109,8 @@ export default function Dashboard() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-extrabold text-slate-900">StudioSync</h1>
           <button 
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-semibold shadow hover:bg-indigo-700 transition cursor-pointer"
+            onClick={() => { setSelectedClient(null); setIsClientModalOpen(true); }}
+            className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold shadow hover:bg-indigo-700 transition cursor-pointer"
           >
             + New Client
           </button>
@@ -132,8 +135,14 @@ export default function Dashboard() {
                   <td className="p-4 text-slate-500 text-sm">{client.email}</td>
                   <td className="p-4 text-right">
                     <button 
+                      onClick={() => { setSelectedClient(client); setIsClientModalOpen(true); }}
+                      className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold cursor-pointer transition-colors p-2 rounded-md hover:bg-indigo-50"
+                    >
+                      Edit
+                    </button>
+                    <button 
                       onClick={() => { handleDeleteClick(client.id!) }}
-                      className="text-rose-600 hover:text-rose-800 font-semibold cursor-pointer transition-colors p-2 rounded-md hover:bg-rose-50"
+                      className="text-rose-600 hover:text-rose-800 text-sm font-semibold cursor-pointer transition-colors p-2 rounded-md hover:bg-rose-50"
                     >
                       Delete
                     </button>
@@ -145,61 +154,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Add client modal */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
-            <h3 className="text-xl font-bold text-slate-900 mb-6">Register New Client</h3>
-            <form onSubmit={handleAddClient} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Company Name</label>
-                <input 
-                  required
-                  type="text" 
-                  className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                  value={newClient.company_name}
-                  onChange={(e) => setNewClient({...newClient, company_name: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">VAT Number</label>
-                <input 
-                  required
-                  type="text" 
-                  className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                  value={newClient.vat_number}
-                  onChange={(e) => setNewClient({...newClient, vat_number: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
-                <input 
-                  required
-                  type="email" 
-                  className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                  value={newClient.email}
-                  onChange={(e) => setNewClient({...newClient, email: e.target.value})}
-                />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button 
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="flex-1 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-lg font-semibold hover:bg-slate-200"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700"
-                >
-                  Save Client
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Edit client modal */}
+      <ClientModal 
+        isOpen={isClientModalOpen}
+        initialData={selectedClient}
+        onClose={() => setIsClientModalOpen(false)}
+        onSave={handleSaveClient}
+      />
 
       {/* Delete confirmation modal */}
       <NotificationModal 
