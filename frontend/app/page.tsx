@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { ENDPOINTS } from '../config/api';
+import NotificationModal from '../components/NotificationModal';
 
 interface Client {
   id?: number;
@@ -14,34 +16,31 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   
   // States for Modals
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    type: 'confirm' as 'confirm' | 'alert' | 'success',
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
   
   // Selection/Form states
-  const [clientToDelete, setClientToDelete] = useState<number | null>(null);
   const [newClient, setNewClient] = useState<Client>({ company_name: '', vat_number: '', email: '' });
 
-  const fetchClients = async () => {
-    try {
-      const response = await fetch('http://localhost:8080/clients.php');
-      const result = await response.json();
-      if (result.status === 'success') setClients(result.data);
-    } catch (error) {
-      console.error('Error fetching clients:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  
+  // Handlers
   const handleAddClient = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:8080/clients.php', {
+      const response = await fetch(ENDPOINTS.CLIENTS, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newClient),
       });
+      
       const result = await response.json();
+
       if (result.status === 'success') {
         setIsAddModalOpen(false);
         setNewClient({ company_name: '', vat_number: '', email: '' });
@@ -52,15 +51,33 @@ export default function Dashboard() {
     }
   };
 
-  const confirmDelete = async () => {
-    if (clientToDelete === null) return;
+  const handleDeleteClick = (id: number) => {
+    console.log('Deleting client with ID:', id);
+
+    if (id === null) return;
+
+    setModalConfig({
+      isOpen: true,
+      type: 'confirm',
+      title: 'Delete Client',
+      message: 'Are you sure you want to remove this client?',
+      onConfirm: () => confirmDelete(id)
+    });
+  };
+
+  // Functions
+  const confirmDelete = async (id: number) => {
+    console.log('Deleting client with ID:', id);
+
+    if (id === null) return;
+
     try {
-      const response = await fetch(`http://localhost:8080/clients.php?id=${clientToDelete}`, {
+      const response = await fetch(ENDPOINTS.CLIENT_DELETE(id), {
         method: 'DELETE',
       });
       const result = await response.json();
       if (result.status === 'success') {
-        setIsDeleteModalOpen(false);
+        setModalConfig({...modalConfig, isOpen: false});
         fetchClients();
       }
     } catch (error) {
@@ -68,8 +85,21 @@ export default function Dashboard() {
     }
   };
 
+  const fetchClients = async () => {
+    try {
+      const response = await fetch(ENDPOINTS.CLIENTS);
+      const result = await response.json();
+      if (result.status === 'success') setClients(result.data);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => { fetchClients(); }, []);
 
+  // Renderer
   return (
     <main className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-6xl mx-auto">
@@ -77,7 +107,7 @@ export default function Dashboard() {
           <h1 className="text-3xl font-extrabold text-slate-900">StudioSync</h1>
           <button 
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-semibold shadow hover:bg-indigo-700 transition"
+            className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-semibold shadow hover:bg-indigo-700 transition cursor-pointer"
           >
             + New Client
           </button>
@@ -102,8 +132,8 @@ export default function Dashboard() {
                   <td className="p-4 text-slate-500 text-sm">{client.email}</td>
                   <td className="p-4 text-right">
                     <button 
-                      onClick={() => { setClientToDelete(client.id!); setIsDeleteModalOpen(true); }}
-                      className="text-rose-600 hover:text-rose-700 text-sm font-semibold"
+                      onClick={() => { handleDeleteClick(client.id!) }}
+                      className="text-rose-600 hover:text-rose-800 font-semibold cursor-pointer transition-colors p-2 rounded-md hover:bg-rose-50"
                     >
                       Delete
                     </button>
@@ -115,7 +145,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ADD CLIENT MODAL */}
+      {/* Add client modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
@@ -171,19 +201,12 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* DELETE CONFIRMATION MODAL (Precedente) */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Confirm Deletion</h3>
-            <p className="text-slate-500 text-sm mb-6">Are you sure? This data will be permanently removed.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 px-4 py-2 bg-slate-100 rounded-lg font-semibold">Cancel</button>
-              <button onClick={confirmDelete} className="flex-1 px-4 py-2 bg-rose-600 text-white rounded-lg font-semibold">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Delete confirmation modal */}
+      <NotificationModal 
+        {...modalConfig} 
+        onClose={() => setModalConfig({...modalConfig, isOpen: false})} 
+      />
+
     </main>
   );
 }
