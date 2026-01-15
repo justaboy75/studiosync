@@ -40,8 +40,14 @@ try {
             break;
 
         case 'DELETE':
-            // Delete client (usually ID is passed as a query parameter: clients.php?id=1)
+            // Delete client by id
             if (isset($_GET['id'])) {
+                
+                // Delete client's associated subfolders/files in upload folder
+                $clientFolder = "uploads/client_" . $_GET['id'];
+                deleteDirectory($clientFolder);
+
+                // Delete client record from database and related document records
                 $sql = "DELETE FROM clients WHERE id = ?";
                 executeQuery($sql, [$_GET['id']]);
                 echo json_encode(["status" => "success", "message" => "Client deleted"]);

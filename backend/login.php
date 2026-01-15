@@ -2,6 +2,11 @@
 
 require_once 'db.php';
 
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 $input = json_decode(file_get_contents('php://input'), true);
 $user = $input['username'] ?? '';
 $pass = $input['password'] ?? '';
@@ -14,6 +19,7 @@ if ($userData && password_verify($pass, $userData['password_hash'])) {
         "status" => "success",
         "user" => [
             "id" => $userData['id'],
+            "username" => $userData['username'],
             "role" => $userData['role'],
             "client_id" => $userData['client_id']
         ]

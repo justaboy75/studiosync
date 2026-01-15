@@ -1,19 +1,18 @@
 "use client";
-
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../context/AuthContext';
 import { ENDPOINTS } from '../config/api';
+import { Client, User } from '../types';
 import NotificationModal from '../components/NotificationModal';
 import ClientModal from '../components/ClientModal';
 import DocumentModal from '../components/DocumentModal';
+import AdminView from '../components/AdminView';
+import ClientView from '../components/ClientView';
 
-interface Client {
-  id?: number;
-  company_name: string;
-  vat_number: string;
-  email: string;
-}
 
 export default function Dashboard() {
+  const { user, logout, isLoading } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -28,10 +27,23 @@ export default function Dashboard() {
     message: '',
     onConfirm: () => {}
   });
-  
-  
+  const router = useRouter();
+
   // Handlers
-  const handleSaveClient = async (clientData: Client) => {
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+
+    setIsClientModalOpen(false);
+    setIsDocumentModalOpen(false);
+    setSelectedClient(null);
+    setClients([]);
+    
+    router.push('/login');
+  };
+
+  const handleSaveClient = async (clientData: Client | null) => {
+    console.log("Saving client data:", clientData);
+
     try {
       const response = await fetch(ENDPOINTS.CLIENTS, {
         method: 'POST',
@@ -40,6 +52,8 @@ export default function Dashboard() {
       });
       
       const result = await response.json();
+
+      console.log("Save client response:", result);
       
       if (result.status === 'success') {
         setIsClientModalOpen(false);
@@ -56,25 +70,8 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteClick = (id: number) => {
-    console.log('Deleting client with ID:', id);
-
-    if (id === null) return;
-
-    setModalConfig({
-      isOpen: true,
-      type: 'confirm',
-      title: 'Delete Client',
-      message: 'Are you sure you want to remove this client?',
-      onConfirm: () => confirmDelete(id)
-    });
-  };
-
-  // Functions
-  const confirmDelete = async (id: number) => {
-    console.log('Deleting client with ID:', id);
-
-    if (id === null) return;
+  const handleDeleteClient = async (id: number | undefined) => {
+    if (id === null || id === undefined) return;
 
     try {
       const response = await fetch(ENDPOINTS.CLIENT_DELETE(id), {
@@ -90,6 +87,37 @@ export default function Dashboard() {
     }
   };
 
+  const handleDeleteDocument = async (docId: number, refreshCallback: () => void) => {
+    if (!user) return;
+    
+    try {
+      const res = await fetch(ENDPOINTS.DOC_DELETE(docId, user.id), {
+        method: 'DELETE',
+      });
+      const result = await res.json();
+
+      if (result.status === 'success') {
+        if (refreshCallback) refreshCallback();
+      }
+    } catch (error) {
+      console.error("Error deleting document:", error);
+    }
+  };
+
+  // Functions
+  const triggerConfirm = (title: string, message: string, action: () => void) => {
+    setModalConfig({
+      isOpen: true,
+      type: 'confirm',
+      title,
+      message,
+      onConfirm: async () => {
+        await action();
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
   const fetchClients = async () => {
     try {
       const response = await fetch(ENDPOINTS.CLIENTS);
@@ -102,66 +130,58 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => { fetchClients(); }, []);
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) {
+      router.push('/login');
+    } else {
+      fetchClients();
+    }
+  }, []);
 
-  // Renderer
+  if (isLoading) return <div>Loading...</div>;
+  if (!user) return null; // Avoid page flickering
+
   return (
     <main className="min-h-screen bg-slate-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-extrabold text-slate-900">StudioSync</h1>
+      <div className="max-w-7xl mx-auto">
+        <header className="flex justify-between items-center mb-10">
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">StudioSync</h1>
+            <p className="text-slate-500 text-sm font-medium">Logged in as {user.username} ({user.role})</p>
+          </div>
           <button 
-            onClick={() => { setSelectedClient(null); setIsClientModalOpen(true); }}
-            className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold shadow hover:bg-indigo-700 transition cursor-pointer"
+            onClick={handleLogout}
+            className="px-4 py-2 text-sm font-bold text-slate-600 hover:text-rose-600 border border-slate-200 rounded-lg hover:border-rose-100 transition-all cursor-pointer"
           >
-            + New Client
+            Logout
           </button>
-        </div>
+        </header>
 
-        {/* Clients Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="p-4 text-sm font-semibold text-slate-700">Company</th>
-                <th className="p-4 text-sm font-semibold text-slate-700">VAT Number</th>
-                <th className="p-4 text-sm font-semibold text-slate-700">Email</th>
-                <th className="p-4 text-sm font-semibold text-slate-700 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {clients.map((client) => (
-                <tr key={client.id} className="hover:bg-slate-50/50 transition">
-                  <td className="p-4 text-slate-900 font-medium">{client.company_name}</td>
-                  <td className="p-4 text-slate-500 text-sm">{client.vat_number}</td>
-                  <td className="p-4 text-slate-500 text-sm">{client.email}</td>
-                  <td className="p-4 text-right">
-                    <button 
-                      onClick={() => { setSelectedClient(client); setIsDocumentModalOpen(true); }}
-                      className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold cursor-pointer transition-colors p-2 rounded-md hover:bg-indigo-50"
-                    >
-                      Documents
-                    </button>
-                    <button 
-                      onClick={() => { setSelectedClient(client); setIsClientModalOpen(true); }}
-                      className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold cursor-pointer transition-colors p-2 rounded-md hover:bg-indigo-50"
-                    >
-                      Edit
-                    </button>
-                    <button 
-                      onClick={() => { handleDeleteClick(client.id!) }}
-                      className="text-rose-600 hover:text-rose-800 text-sm font-semibold cursor-pointer transition-colors p-2 rounded-md hover:bg-rose-50"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {user.role === 'admin' ? (
+          <AdminView 
+            clients={clients} 
+            onOpenDocuments={(c: Client) => { setSelectedClient(c); setIsDocumentModalOpen(true); }}
+            onOpenEdit={(c: Client | null) => { setSelectedClient(c); setIsClientModalOpen(true); }}
+            onDelete={(c: Client) => triggerConfirm(
+              "Delete Client", 
+              `Are you sure you want to delete ${c.company_name}?`, 
+              () => handleDeleteClient(c.id)
+            )}
+          />
+        ) : (
+          <ClientView 
+            clientId={user.client_id} 
+            clientName={user.username}
+            onDelete={(doc: any, refreshList: () => void) => triggerConfirm(
+              "Delete Document", 
+              `Delete ${doc.original_name}?`, 
+              () => handleDeleteDocument(doc.id, refreshList)
+            )}
+          />
+        )}
       </div>
-
+      
       {/* Edit client modal */}
       <ClientModal 
         isOpen={isClientModalOpen}
@@ -183,7 +203,6 @@ export default function Dashboard() {
         {...modalConfig} 
         onClose={() => setModalConfig({...modalConfig, isOpen: false})} 
       />
-
     </main>
   );
 }

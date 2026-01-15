@@ -1,12 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-
-interface Client {
-  id?: number;
-  company_name: string;
-  vat_number: string;
-  email: string;
-}
+import { Client } from '../types';
 
 interface ClientModalProps {
   isOpen: boolean;
@@ -19,7 +13,8 @@ export default function ClientModal({ isOpen, onClose, onSave, initialData }: Cl
   const [formData, setFormData] = useState<Client>({
     company_name: '',
     vat_number: '',
-    email: ''
+    email: '',
+    created_at: ''
   });
 
   // Sync state with initialData when it changes (for Edit mode)
@@ -27,7 +22,7 @@ export default function ClientModal({ isOpen, onClose, onSave, initialData }: Cl
     if (initialData) {
       setFormData(initialData);
     } else {
-      setFormData({ company_name: '', vat_number: '', email: '' });
+      setFormData({ company_name: '', vat_number: '', email: '', created_at: '' });
     }
   }, [initialData, isOpen]);
 

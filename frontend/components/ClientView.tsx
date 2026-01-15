@@ -1,20 +1,12 @@
-"use client";
 import { useState, useEffect } from 'react';
 import { ENDPOINTS } from '../config/api';
-import { useAuth } from '../context/AuthContext';
-import NotificationModal from './NotificationModal';
 
-export default function DocumentsModal({ isOpen, onClose, clientId, clientName }: any) {
-  const { user } = useAuth();
+export default function ClientView({ clientId, clientName, onDelete }: any) {
   const [documents, setDocuments] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [availableLabels, setAvailableLabels] = useState<any[]>([]);
-  const [confirmConfig, setConfirmConfig] = useState({
-    isOpen: false,
-    docId: null as number | null,
-    docName: ''
-  });
+  const [progress, setProgress] = useState(0);
 
   const fetchDocs = async () => {
     const res = await fetch(`${ENDPOINTS.DOCUMENTS}?client_id=${clientId}`);
@@ -76,29 +68,33 @@ export default function DocumentsModal({ isOpen, onClose, clientId, clientName }
     }
   };
 
-  const handleDeleteRequest = (id: number, name: string) => {
-    setConfirmConfig({
-      isOpen: true,
-      docId: id,
-      docName: name
-    });
-  };
+  const handleUpload = (file: File) => {
+    setUploading(true);
+    setProgress(0);
 
-  const confirmDelete = async () => {
-    if (!confirmConfig.docId || !user) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('client_id', clientId);
+
+    const xhr = new XMLHttpRequest();
     
-    try {
-      const res = await fetch(ENDPOINTS.DOC_DELETE(confirmConfig.docId, user.id), { 
-        method: 'DELETE' 
-      });
-      const result = await res.json();
-      if (result.status === 'success') {
-        setConfirmConfig({ ...confirmConfig, isOpen: false });
+    // Progress event listener
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        setProgress(percentComplete);
+      }
+    };
+
+    xhr.onload = () => {
+      setUploading(false);
+      if (xhr.status === 200) {
         fetchDocs();
       }
-    } catch (error) {
-      console.error("Delete failed", error);
-    }
+    };
+
+    xhr.open('POST', `${ENDPOINTS.UPLOAD}`, true);
+    xhr.send(formData);
   };
 
   const formatSize = (bytes: number) => {
@@ -110,25 +106,18 @@ export default function DocumentsModal({ isOpen, onClose, clientId, clientName }
   };
 
   useEffect(() => { 
-    if (isOpen) {
-        fetchDocs();
-        fetchLabels();
-    } 
-  }, [isOpen]);
-
-  if (!isOpen) return null;
+    fetchDocs();
+    fetchLabels();
+  }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl max-w-2xl w-full p-8 shadow-2xl animate-in zoom-in duration-150">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h3 className="text-xl font-bold text-slate-900">Document Archive</h3>
-            <p className="text-sm text-slate-500">{clientName}</p>
-          </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-2 cursor-pointer">✕</button>
-        </div>
-
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+        <header className="mb-8">
+          <h2 className="text-xl font-bold text-slate-900">Your Document Archive, {clientName}</h2>
+          <p className="text-slate-500 text-sm">Upload and manage your documents here</p>
+        </header>
+        
         {/* Upload Area with Drag & Drop */}
         <div 
           onDragEnter={handleDrag}
@@ -148,6 +137,20 @@ export default function DocumentsModal({ isOpen, onClose, clientId, clientName }
             <p className="text-xs text-slate-400 mt-2 text-uppercase font-semibold">PDF, JPG, PNG (Max 10MB)</p>
           </label>
         </div>
+        {uploading && (
+          <div className="mt-4 w-full">
+            <div className="flex justify-between mb-1">
+              <span className="text-sm font-medium text-indigo-700">Uploading document...</span>
+              <span className="text-sm font-medium text-indigo-700">{progress}%</span>
+            </div>
+            <div className="w-full bg-slate-200 rounded-full h-2.5">
+              <div 
+                className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300 shadow-[0_0_8px_rgba(79,70,229,0.4)]" 
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+          </div>
+        )}
 
         {/* Enhanced Documents List */}
         <div className="max-h-72 overflow-y-auto pr-2 custom-scrollbar">
@@ -200,7 +203,7 @@ export default function DocumentsModal({ isOpen, onClose, clientId, clientName }
                   </td>
                   <td className="py-3 text-right">
                     <button 
-                      onClick={() => handleDeleteRequest(doc.id, doc.original_name)}
+                      onClick={() => onDelete(doc, fetchDocs)}
                       className="text-rose-500 hover:text-rose-700 text-xs font-bold cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       Delete
@@ -211,16 +214,6 @@ export default function DocumentsModal({ isOpen, onClose, clientId, clientName }
             </tbody>
           </table>
         </div>
-
-        {/* Confirm Delete Modal */}
-        <NotificationModal 
-          isOpen={confirmConfig.isOpen}
-          type="confirm"
-          title="Delete Document"
-          message={`Are you sure you want to permanently delete "${confirmConfig.docName}"?`}
-          onConfirm={confirmDelete}
-          onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
-        />
 
       </div>
     </div>

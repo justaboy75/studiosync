@@ -7,6 +7,7 @@ const API_BASE_URL = 'http://localhost:8080';
 
 export const ENDPOINTS = {
   // Base endpoints
+  LOGIN: `${API_BASE_URL}/login.php`,
   CLIENTS: `${API_BASE_URL}/clients.php`,
   UPLOAD: `${API_BASE_URL}/upload.php`,
   DOCUMENTS: `${API_BASE_URL}/documents.php`,
@@ -15,5 +16,6 @@ export const ENDPOINTS = {
 
   // Parameterized endpoints
   CLIENT_DELETE: (id: number | string) => `${API_BASE_URL}/clients.php?id=${id}`,
+  DOC_DELETE: (id: number | string, user_id: number | null) => `${API_BASE_URL}/documents.php?id=${id}&user_id=${user_id}`,
   DOWNLOAD: (id: number) => `${API_BASE_URL}/download.php?id=${id}`,
 };
