@@ -41,10 +41,12 @@ export default function ClientModal({ isOpen, onClose, onSave, initialData }: Cl
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
       <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
-        <h3 className="text-xl font-bold text-slate-900 mb-6">
-          {initialData ? 'Edit Client' : 'Register New Client'}
-        </h3>
-        
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-bold">
+            {initialData ? 'Edit Client' : 'Register New Client'}
+          </h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Company Name</label>

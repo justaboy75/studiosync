@@ -5,8 +5,6 @@
  */
 require_once 'db.php';
 
-header('Content-Type: application/json');
-
 try {
     // Create Clients Table
     $createTableSql = "CREATE TABLE IF NOT EXISTS clients (

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ENDPOINTS } from '../config/api';
 import NotificationModal from '../components/NotificationModal';
 import ClientModal from '../components/ClientModal';
+import DocumentModal from '../components/DocumentModal';
 
 interface Client {
   id?: number;
@@ -18,6 +19,7 @@ export default function Dashboard() {
   
   // States for Modals
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
@@ -135,6 +137,12 @@ export default function Dashboard() {
                   <td className="p-4 text-slate-500 text-sm">{client.email}</td>
                   <td className="p-4 text-right">
                     <button 
+                      onClick={() => { setSelectedClient(client); setIsDocumentModalOpen(true); }}
+                      className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold cursor-pointer transition-colors p-2 rounded-md hover:bg-indigo-50"
+                    >
+                      Documents
+                    </button>
+                    <button 
                       onClick={() => { setSelectedClient(client); setIsClientModalOpen(true); }}
                       className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold cursor-pointer transition-colors p-2 rounded-md hover:bg-indigo-50"
                     >
@@ -160,6 +168,14 @@ export default function Dashboard() {
         initialData={selectedClient}
         onClose={() => setIsClientModalOpen(false)}
         onSave={handleSaveClient}
+      />
+
+      {/* Documents modal */}
+      <DocumentModal 
+        isOpen={isDocumentModalOpen}
+        clientId={selectedClient?.id!}
+        clientName={selectedClient?.company_name!}
+        onClose={() => setIsDocumentModalOpen(false)}
       />
 
       {/* Delete confirmation modal */}
