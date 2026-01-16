@@ -4,6 +4,7 @@ export interface Client {
   company_name: string;
   vat_number: string;
   email: string;
+  username: string;
   created_at: string;
 }
 
@@ -27,6 +28,7 @@ export interface User {
   username: string;
   role: 'admin' | 'client';
   client_id: number | null;
+  is_active: boolean;
 }
 
 // Auth context type

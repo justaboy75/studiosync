@@ -13,6 +13,7 @@ export const ENDPOINTS = {
   DOCUMENTS: `${API_BASE_URL}/documents.php`,
   LABELS: `${API_BASE_URL}/labels.php`,
   UPDATE_DOC_LABEL: `${API_BASE_URL}/documents.php?action=update_label`,
+  SETUP_PASSWORD: `${API_BASE_URL}/setup_password.php`,
 
   // Parameterized endpoints
   CLIENT_DELETE: (id: number | string) => `${API_BASE_URL}/clients.php?id=${id}`,

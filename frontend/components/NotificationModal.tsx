@@ -53,7 +53,9 @@ export default function NotificationModal({ isOpen, type, title, message, onConf
         </div>
         
         <h3 className="text-lg font-bold text-slate-900 mb-2 text-center">{title}</h3>
-        <p className="text-slate-500 text-sm mb-6 text-center">{message}</p>
+        <p className="text-slate-500 text-sm mb-6 text-center">
+          <span dangerouslySetInnerHTML={{ __html: message }} />
+        </p>
         
         <div className="flex gap-3">
           {type === 'confirm' && (

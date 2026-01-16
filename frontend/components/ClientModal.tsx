@@ -14,6 +14,7 @@ export default function ClientModal({ isOpen, onClose, onSave, initialData }: Cl
     company_name: '',
     vat_number: '',
     email: '',
+    username: '',
     created_at: ''
   });
 
@@ -22,7 +23,7 @@ export default function ClientModal({ isOpen, onClose, onSave, initialData }: Cl
     if (initialData) {
       setFormData(initialData);
     } else {
-      setFormData({ company_name: '', vat_number: '', email: '', created_at: '' });
+      setFormData({ company_name: '', vat_number: '', email: '', username: '', created_at: '' });
     }
   }, [initialData, isOpen]);
 
@@ -72,6 +73,22 @@ export default function ClientModal({ isOpen, onClose, onSave, initialData }: Cl
               value={formData.email}
               onChange={(e) => setFormData({...formData, email: e.target.value})}
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
+            <input 
+              required={!initialData}
+              type="text" 
+              disabled={initialData ? true : false}
+              className={`w-full p-2.5 border rounded-lg outline-none transition-all ${initialData ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : 'border-slate-300 focus:ring-2 focus:ring-indigo-500'}`}
+              value={formData.username}
+              onChange={(e) => setFormData({...formData, username: e.target.value})}
+            />
+            {initialData && (
+              <p className="text-xs text-slate-400 mt-1">
+                Username cannot be changed after creation.
+              </p>
+            )}
           </div>
 
           <div className="flex gap-3 pt-4">

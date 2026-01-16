@@ -11,7 +11,7 @@ $input = json_decode(file_get_contents('php://input'), true);
 $user = $input['username'] ?? '';
 $pass = $input['password'] ?? '';
 
-$sql = "SELECT id, username, password_hash, role, client_id FROM users WHERE username = ?";
+$sql = "SELECT id, username, password_hash, role, client_id, is_active FROM users WHERE username = ?";
 $userData = fetchAll($sql, [$user])[0] ?? null;
 
 if ($userData && password_verify($pass, $userData['password_hash'])) {
@@ -21,7 +21,8 @@ if ($userData && password_verify($pass, $userData['password_hash'])) {
             "id" => $userData['id'],
             "username" => $userData['username'],
             "role" => $userData['role'],
-            "client_id" => $userData['client_id']
+            "client_id" => $userData['client_id'],
+            "is_active" => (bool)$userData['is_active']
         ]
     ]);
 } else {

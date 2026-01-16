@@ -58,6 +58,19 @@ export default function Dashboard() {
       if (result.status === 'success') {
         setIsClientModalOpen(false);
         fetchClients();
+        
+        // New client created
+        if(result.id) {
+          setModalConfig({
+            isOpen: true,
+            type: 'success',
+            title: 'New Client created',
+            message: `Give these credentials to the client:<br><br><b>Username:</b> ${result.temp_credentials?.username} <br> <b>Password:</b> ${result.temp_credentials?.password}<br><br><i>The client will be asked to change it upon first login.</i>`,
+            onConfirm: () => {
+              setModalConfig(prev => ({ ...prev, isOpen: false }));    
+            }
+          });
+        } 
       }
     } catch (error) {
       setModalConfig({
@@ -132,7 +145,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    if (!storedUser) {
+    
+    if (!isLoading && user && !user.is_active) {
+      router.push('/setup-password');
+    } else if (!storedUser) {
       router.push('/login');
     } else {
       fetchClients();

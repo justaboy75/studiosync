@@ -5,19 +5,18 @@
  */
 require_once 'db.php';
 
-// Handle preflight OPTIONS request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {
     switch ($method) {
+        case 'OPTIONS':
+            // Preflight request handling
+            http_response_code(200);
+            exit;
+
         case 'GET':
             // Fetch all clients
-            $sql = "SELECT * FROM clients ORDER BY created_at DESC";
+            $sql = "SELECT clients.*, users.username FROM clients LEFT JOIN users ON clients.id = users.client_id ORDER BY created_at DESC";
             $data = fetchAll($sql);
             echo json_encode(["status" => "success", "data" => $data]);
             break;
@@ -35,7 +34,29 @@ try {
                 // CREATE
                 $sql = "INSERT INTO clients (company_name, vat_number, email) VALUES (?, ?, ?)";
                 $newId = executeQuery($sql, [$input['company_name'], $input['vat_number'], $input['email']]);
-                echo json_encode(["status" => "success", "message" => "Client created", "id" => $newId]);
+
+                if ($newId) {
+                    $tempPassword = bin2hex(random_bytes(4)); // Short tempoorary password (e.g. "a1b2c3d4")
+                    $hashedPass = password_hash($tempPassword, PASSWORD_BCRYPT);
+                    
+                    executeQuery(
+                        "INSERT INTO users (username, password_hash, role, client_id, is_active) VALUES (?, ?, 'client', ?, FALSE)",
+                        [$input['username'], $hashedPass, $newId]
+                    );
+
+                    echo json_encode([
+                        "status" => "success", 
+                        "message" => "Client created",
+                        "id" => $newId,
+                        "temp_credentials" => [
+                            "username" => $input['username'],
+                            "password" => $tempPassword
+                        ]
+                    ]);
+                } else {
+                    http_response_code(400);
+                    echo json_encode(["status" => "error", "message" => "Error creating new client"]);
+                }
             }
             break;
 
