@@ -18,8 +18,9 @@ services:
     build: 
       context: ./backend
       dockerfile: Dockerfile
+    restart: always
     environment:
-      DB_HOST: ${DB_HOST}
+      DB_HOST: db
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
@@ -37,14 +38,19 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        - NEXT_PUBLIC_API_URL=https://app.just-code.it/api
+    restart: always
     container_name: studiosync-ui
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+    #volumes:
+    #  - ./frontend:/app
+    #  - /app/node_modules
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_API_URL=https://app.just-code.it/api
+      - NODE_ENV=production
+    command: npm run start -- -H 0.0.0.0
     depends_on:
       - backend
     stdin_open: true
