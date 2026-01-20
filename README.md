@@ -25,7 +25,7 @@ To get a local instance of StudioSync up and running, follow these steps:
 
 1. **Clone the repository**
 ```bash
-   git clone [https://github.com/justaboy75/StudioSync.git](https://github.com/justaboy75/StudioSync.git)
+   git clone https://github.com/justaboy75/StudioSync.git
    cd StudioSync
 ```
 2. **Spin up the environment** 
@@ -39,12 +39,14 @@ Open your browser and navigate to:
  - `http://localhost:8080` for API
 
 ## Project structure
+```
 .
 ├── /backend      # Server-side logic & Database interactions
 ├── /frontend     # Client-side interface
 ├── /uploads      # User-uploaded documents (gitignored for security)
 ├── docker-compose.yml
 └── README.md
+```
 
 ## Security and performance
  - **Postgres**: Used for its robustness and data integrity, ensuring client records are never lost.
