@@ -53,6 +53,13 @@ Open your browser and navigate to:
  - **Dockerized**: Ensures the same environment from development to production.
  - **Privacy**: Designed with a clear separation between client data.
 
+## Screenshots
+Administrator dashboard:
+<img width="995" height="509" alt="image" src="https://github.com/user-attachments/assets/57109aeb-570e-4e1c-b448-20ae84fe63a8" />
+
+Client document upload page:
+<img width="999" height="692" alt="image" src="https://github.com/user-attachments/assets/d69cfe79-b9b8-4b6b-aba1-b1c46b233692" />
+
 ## License
 This project is open-source and available under the MIT License.
 
