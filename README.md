@@ -11,7 +11,7 @@ A professional document management system designed for accountants and consultan
 * **File Support:** Full support for PDF and image formats (JPG, PNG).
 
 ## Tech Stack
-- **Frontend**: React / Next.js
+- **Frontend**: React / Next.js / Tailwind CSS
 - **Backend**: PHP 8.3 (FPM)
 - **Database**: PostgreSQL 16
 - **Infrastructure**: Docker & Docker Compose
