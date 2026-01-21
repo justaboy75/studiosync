@@ -1,4 +1,12 @@
 "use client";
+
+/**
+ * StudioSync Client Orchestration Modal
+ * * A versatile form component for both onboarding new clients and updating 
+ * existing profiles. Implements dynamic field validation and state 
+ * synchronization based on the 'initialData' context.
+ */
+
 import { useState, useEffect } from 'react';
 import { Client } from '../types';
 
@@ -6,10 +14,15 @@ interface ClientModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (client: Client) => void;
+  /** * Determines the operation mode:
+   * - Client: EDIT mode (initializes form with existing values)
+   * - null/undefined: CREATE mode (initializes empty form)
+   */
   initialData?: Client | null; // If present, we are in EDIT mode
 }
 
 export default function ClientModal({ isOpen, onClose, onSave, initialData }: ClientModalProps) {
+  // Local form state management
   const [formData, setFormData] = useState<Client>({
     company_name: '',
     vat_number: '',
@@ -18,7 +31,10 @@ export default function ClientModal({ isOpen, onClose, onSave, initialData }: Cl
     created_at: ''
   });
 
-  // Sync state with initialData when it changes (for Edit mode)
+  /**
+   * Effect Hook: Form Synchronization
+   * Resets or hydrates the form whenever the modal opens or the target client changes.
+   */
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
@@ -27,8 +43,12 @@ export default function ClientModal({ isOpen, onClose, onSave, initialData }: Cl
     }
   }, [initialData, isOpen]);
 
+  // Early return for performance if modal is inactive
   if (!isOpen) return null;
 
+  /**
+   * Dispatches the validated form data to the parent handler.
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
@@ -37,13 +57,19 @@ export default function ClientModal({ isOpen, onClose, onSave, initialData }: Cl
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
       <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
+        
+        {/* Modal Header */}
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold">
             {initialData ? 'Edit Client' : 'Register New Client'}
           </h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
         </div>
+
+        {/* Client Data Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* Company Identity */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Company Name</label>
             <input 
@@ -54,6 +80,8 @@ export default function ClientModal({ isOpen, onClose, onSave, initialData }: Cl
               onChange={(e) => setFormData({...formData, company_name: e.target.value})}
             />
           </div>
+
+          {/* Tax Identification (VAT) */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">VAT Number</label>
             <input 
@@ -64,6 +92,8 @@ export default function ClientModal({ isOpen, onClose, onSave, initialData }: Cl
               onChange={(e) => setFormData({...formData, vat_number: e.target.value})}
             />
           </div>
+
+          {/* Communication Channel */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
             <input 
@@ -74,6 +104,8 @@ export default function ClientModal({ isOpen, onClose, onSave, initialData }: Cl
               onChange={(e) => setFormData({...formData, email: e.target.value})}
             />
           </div>
+
+          {/* Identity & Security: Username Management */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
             <input 
@@ -91,6 +123,7 @@ export default function ClientModal({ isOpen, onClose, onSave, initialData }: Cl
             )}
           </div>
 
+          {/* Modal Actions */}
           <div className="flex gap-3 pt-4">
             <button 
               type="button"

@@ -1,9 +1,18 @@
 "use client";
+
+/**
+ * StudioSync Main Orchestrator (Dashboard)
+ * * High-level Controller that manages application state, view switching based on 
+ * User Roles (Admin vs Client), and global notification orchestration.
+ */
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import { ENDPOINTS } from '../config/api';
 import { Client, User } from '../types';
+
+// Component imports for modular UI architecture
 import NotificationModal from '../components/NotificationModal';
 import ClientModal from '../components/ClientModal';
 import DocumentModal from '../components/DocumentModal';

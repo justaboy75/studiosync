@@ -1,3 +1,13 @@
+/**
+ * StudioSync Client Document Vault
+ * * Managed interface for document ingestion and lifecycle.
+ * Features:
+ * - Reactive Drag & Drop zone with visual feedback.
+ * - Real-time upload progress tracking via XHR.
+ * - Dynamic metadata tagging (Labels).
+ * - Secure binary streaming integration.
+ */
+
 import { useState, useEffect } from 'react';
 import { ENDPOINTS } from '../config/api';
 
@@ -8,18 +18,25 @@ export default function ClientView({ clientId, clientName, onDelete }: any) {
   const [availableLabels, setAvailableLabels] = useState<any[]>([]);
   const [progress, setProgress] = useState(0);
 
+  /**
+   * REFRESH: Syncs the local document state with the backend.
+   */
   const fetchDocs = async () => {
     const res = await fetch(`${ENDPOINTS.DOCUMENTS}?client_id=${clientId}`);
     const result = await res.json();
     if (result.status === 'success') setDocuments(result.data);
   };
 
+  /**
+   * TAXONOMY: Loads available document categories for the select menus.
+   */
   const fetchLabels = async () => {
     const res = await fetch(ENDPOINTS.LABELS);
     const result = await res.json();
     if (result.status === 'success') setAvailableLabels(result.data);
   };
 
+ 
   const uploadFile = async (file: File) => {
     setUploading(true);
     const formData = new FormData();
@@ -38,6 +55,9 @@ export default function ClientView({ clientId, clientName, onDelete }: any) {
     }
   };
 
+  /**
+   * METADATA UPDATE: Updates the label_id for a specific asset.
+   */
   const updateLabel = async (docId: number, labelId: string) => {
     try {
         await fetch(`${ENDPOINTS.DOCUMENTS}?action=update_label`, {
@@ -51,7 +71,7 @@ export default function ClientView({ clientId, clientName, onDelete }: any) {
     }
   };
 
-  // Drag & Drop Handlers
+  // --- Drag & Drop UX Handlers ---
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -97,6 +117,9 @@ export default function ClientView({ clientId, clientName, onDelete }: any) {
     xhr.send(formData);
   };
 
+  /**
+   * UTILITY: Human-readable file size conversion.
+   */
   const formatSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;

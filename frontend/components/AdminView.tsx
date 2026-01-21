@@ -1,8 +1,16 @@
+/**
+ * StudioSync Admin Dashboard View
+ * * Provides the primary interface for professional users to manage their client portfolio.
+ * Implements a high-density data table with conditional action triggers for 
+ * CRUD operations and document vault access.
+ */
+
 import { useState } from 'react';
 
 export default function AdminView({ clients, onOpenDocuments, onOpenEdit, onDelete }: any) {
   return (
     <div className="max-w-4xl mx-auto">
+        {/* Header Actions: Unified entry point for client onboarding */}
         <div className="flex justify-end items-center mb-8">
             <button 
                 onClick={() => { onOpenEdit(null); }}
@@ -12,6 +20,7 @@ export default function AdminView({ clients, onOpenDocuments, onOpenEdit, onDele
             </button>
         </div>
 
+        {/* Main Data Layer: Client List Table */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <table className="w-full text-left">
             <thead className="bg-slate-50 border-b border-slate-200">
