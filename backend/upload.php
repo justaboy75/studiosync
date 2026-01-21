@@ -1,17 +1,20 @@
 <?php
+
 /**
- * Document Upload Controller
- * Handles file saving and database reference.
+ * StudioSync Document Upload Controller
+ * 
+ * This script handles the secure ingestion of client documentation,
+ * manages physical file storage with unique naming conventions,
+ * and persists metadata into the PostgreSQL database.
  */
+
 require_once 'db.php';
 
-header("Access-Control-Allow-Origin: http://localhost:3000");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-
+// Handle preflight OPTIONS requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit; }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Sanitize and validate incoming payload
     $clientId = $_POST['client_id'] ?? null;
     $file = $_FILES['document'] ?? null;
 
@@ -21,24 +24,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Prepare directory for the client in uploads
+    /**
+     * Storage Logic
+     * Create isolated directories for each client to ensure data organization.
+     */
     $targetDir = "uploads/client_" . $clientId . "/";
     if (!file_exists($targetDir)) {
+        // Create directory with appropriate permissions (recursive)
         mkdir($targetDir, 0777, true);
     }
 
-    // Assign a secure file name
+    /**
+     * File Security & Naming
+     * Generate a unique, non-guessable filename to prevent Direct Object Reference attacks.
+     */
     $originalName = $file['name'];
     $extension = pathinfo($originalName, PATHINFO_EXTENSION);
     $safeName = time() . "_" . bin2hex(random_bytes(8)) . "." . $extension;
     $targetFilePath = $targetDir . $safeName;
 
-    // Move file to the target directory and save reference to DB
+    /**
+     * Persistence Layer
+     * Move the temporary file to permanent storage and log metadata in Postgres.
+     */
     if (move_uploaded_file($file['tmp_name'], $targetFilePath)) {
         try {
             $sql = "INSERT INTO documents (client_id, file_name, original_name, file_path, file_type, file_size) 
                     VALUES (?, ?, ?, ?, ?, ?)";
             
+            // executeQuery uses prepared statements to prevent SQL Injection
             executeQuery($sql, [
                 $clientId, 
                 $safeName, 

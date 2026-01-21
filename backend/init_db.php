@@ -1,12 +1,19 @@
 <?php
 /**
- * Database Schema Initialization
- * Creates tables and seeds initial data for testing.
+ * StudioSync Database Migration & Seeding Tool
+ * * This utility automates the creation of the PostgreSQL relational schema
+ * and populates the database with essential seed data for development
+ * and demonstration purposes.
  */
+
 require_once 'db.php';
 
 try {
-    // Create Clients Table
+    /**
+     * Schema Definition: 'clients' table
+     * Stores primary business entities. Using SERIAL for auto-incrementing IDs
+     * and UNIQUE constraints on VAT numbers to ensure data integrity.
+     */
     $createTableSql = "CREATE TABLE IF NOT EXISTS clients (
         id SERIAL PRIMARY KEY,
         company_name VARCHAR(255) NOT NULL,
@@ -16,13 +23,21 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );";
     
+    // Execute DDL (Data Definition Language) statement
     executeQuery($createTableSql);
 
-    // Seed Initial Data (only if table is empty)
+    /**
+     * Data Seeding Logic
+     * Conditional seeding to prevent duplicate records in production environments.
+     * Checks for existing records before injecting sample data.
+     */
     $checkEmpty = fetchAll("SELECT id FROM clients LIMIT 1");
     
     if (empty($checkEmpty)) {
+        // Prepare seeding statement for batch insertion
         $seedSql = "INSERT INTO clients (company_name, vat_number, email) VALUES (?, ?, ?)";
+
+        // Populate with realistic sample data for professional presentation
         executeQuery($seedSql, ['Studio Rossi s.r.l.', 'IT12345678901', 'info@studiorossi.it']);
         executeQuery($seedSql, ['Tech Solutions Hub', 'IT98765432109', 'contact@techhub.com']);
         

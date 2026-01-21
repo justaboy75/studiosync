@@ -1,5 +1,6 @@
 services:
-  # Database: PostgreSQL
+  # Persistence Layer: PostgreSQL Database
+  # Using alpine version for a lightweight and secure footprint
   db:
     image: postgres:16-alpine
     container_name: studiosync-db
@@ -13,7 +14,8 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
-  # Backend: PHP + Nginx (API Server)
+  # Backend Layer: PHP Application Server
+  # Handles business logic, PDF processing, and database interactions
   backend:
     build: 
       context: ./backend
@@ -30,11 +32,13 @@ services:
       - "8080:80"
     volumes:
       - ./backend:/var/www/html
+      # Synchronized volume for persistent document storage
       - ./uploads:/var/www/html/uploads
     depends_on:
       - db
 
-  # Frontend: Next.js / React
+  # Frontend Layer: Next.js Production Build
+  # Provides the User Interface for both Professionals and Clients
   frontend:
     build:
       context: ./frontend
@@ -56,5 +60,6 @@ services:
     stdin_open: true
     tty: true
 
+# Named volumes for data persistence across container restarts
 volumes:
   db_data:
