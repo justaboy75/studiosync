@@ -2,6 +2,12 @@
 
 A professional document management system designed for accountants and consultants. It streamlines the process of collecting, labeling, and organizing documents (PDFs and images) from multiple clients in a secure, centralized environment.
 
+### Live Demo
+Experience the platform in real-time without any setup:
+- **URL:** [https://app.just-code.it](https://app.just-code.it)
+- **Username:** `demoadmin`
+- **Password:** `demoadmin`
+
 ## Key Features
 
 * **Client Portal:** Individual accounts for clients to securely upload their documentation.
